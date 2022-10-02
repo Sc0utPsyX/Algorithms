@@ -23,15 +23,14 @@ public class BinaryTreeDemo {
         tree.add(10);
         tree.add(14);
         tree.add(13);
-
         tree.dfs(System.out::println);
-
         List<Integer> integers = new ArrayList<>();
         tree.bfs(integers::add);
         System.out.println("BFS: " + integers);
         integers.clear();
         tree.dfs(integers::add);
         System.out.println("DFS: " + integers);
+        System.out.println(tree.isBalanced());
     }
 
     static void javaSet() {
