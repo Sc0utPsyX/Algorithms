@@ -146,5 +146,19 @@ public class BinaryTree<T extends Comparable<T>> implements Tree<T> {
 
     @Override
     public boolean isBalanced() {
+        if (root == null) {
+            throw new ArrayIndexOutOfBoundsException("Tree not found");
+        }
+        return Math.abs(depth(root.left) - depth(root.right)) <= 1;
+    }
+
+    public int depth(Node node) {
+        if (node == null) {
+            return 0;
+        }
+        return 1 + Math.max(depth(node.left), depth(node.right));
+    }
+
+
 
 }
