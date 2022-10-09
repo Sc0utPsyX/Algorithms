@@ -15,16 +15,16 @@ public class GraphDemo {
         graph.addVertex("F");
 
         graph.addEdge("A", "D");
-        graph.addEdge("A", "E");
-        graph.addEdge("A", "F");
+        graph.addEdge("A", "E", 4);
+        graph.addEdge("A", "F",3);
 
-        graph.addEdge("B", "C");
-        graph.addEdge("B", "D");
+        graph.addEdge("B", "C",1);
+        graph.addEdge("B", "D", 2);
 
-        graph.addEdge("C", "E");
-        graph.addEdge("C", "F");
+        graph.addEdge("C", "E",8);
+        graph.addEdge("C", "F",8);
 
-        graph.addEdge("D", "B");
+        graph.addEdge("D", "B",2);
 
         System.out.println(graph);
         System.out.println();

@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 public class GraphImpl implements Graph {
 
     private final List<String> vertexes = new ArrayList<>();
-    private final List<List<Boolean>> adjMatrix = new ArrayList<>();
+    private final List<List<Integer>> adjMatrix = new ArrayList<>();
 
     @Override
     public boolean addVertex(String label) {
@@ -20,14 +20,14 @@ public class GraphImpl implements Graph {
 
         vertexes.add(label);
 
-        for (List<Boolean> row : adjMatrix) {
-            row.add(false);
+        for (List<Integer> row : adjMatrix) {
+            row.add(-1);
         }
 
         int size = vertexes.size();
-        List<Boolean> newRow = new ArrayList<>();
+        List<Integer> newRow = new ArrayList<>();
         for (int i = 0; i < size; i++) {
-            newRow.add(false);
+            newRow.add(-1);
         }
 
         adjMatrix.add(newRow);
@@ -46,6 +46,31 @@ public class GraphImpl implements Graph {
     }
 
     @Override
+    public boolean addEdge(String from, String to, int edgeLength) {
+        Objects.requireNonNull(from);
+        Objects.requireNonNull(to);
+
+        int indexOfFrom = indexOf(from);
+        int indexOfTo = indexOf(to);
+
+        if (indexOfFrom == -1 || indexOfTo == -1) {
+            return false;
+        }
+
+        if (indexOfFrom == indexOfTo) {
+            return false;
+        }
+
+        List<Integer> fromEdges = adjMatrix.get(indexOfFrom);
+        fromEdges.set(indexOfTo, edgeLength);
+
+        // Если хотим двунаправленные пути
+//        List<Boolean> toEdges = adjMatrix.get(indexOfTo);
+//        toEdges.set(indexOfFrom, true);
+
+        return true;
+    }
+
     public boolean addEdge(String from, String to) {
         Objects.requireNonNull(from);
         Objects.requireNonNull(to);
@@ -61,8 +86,8 @@ public class GraphImpl implements Graph {
             return false;
         }
 
-        List<Boolean> fromEdges = adjMatrix.get(indexOfFrom);
-        fromEdges.set(indexOfTo, true);
+        List<Integer> fromEdges = adjMatrix.get(indexOfFrom);
+        fromEdges.set(indexOfTo, 0);
 
         // Если хотим двунаправленные пути
 //        List<Boolean> toEdges = adjMatrix.get(indexOfTo);
@@ -70,6 +95,7 @@ public class GraphImpl implements Graph {
 
         return true;
     }
+
 
     @Override
     public void dfs(String start, Consumer<String> visitor) {
@@ -115,11 +141,11 @@ public class GraphImpl implements Graph {
 
     private List<String> getSibling(String label) {
         int indexOfLabel = indexOf(label);
-        List<Boolean> labelRow = adjMatrix.get(indexOfLabel);
+        List<Integer> labelRow = adjMatrix.get(indexOfLabel);
 
         List<String> siblings = new ArrayList<>();
         for (int i = 0; i < labelRow.size(); i++) {
-            if (labelRow.get(i)) {
+            if (labelRow.get(i) >= 0) {
                 String sibling = vertexes.get(i);
                 siblings.add(sibling);
             }
@@ -132,10 +158,10 @@ public class GraphImpl implements Graph {
     public String toString() {
         StringBuilder adjMatrixString = new StringBuilder();
 
-        for (List<Boolean> row : adjMatrix) {
+        for (List<Integer> row : adjMatrix) {
             String routes = row.stream()
                     .map(String::valueOf)
-                    .collect(Collectors.joining(" "));
+                    .collect(Collectors.joining(" \t"));
             adjMatrixString.append(routes).append("\n");
         }
 
