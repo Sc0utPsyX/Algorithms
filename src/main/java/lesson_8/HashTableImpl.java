@@ -1,5 +1,8 @@
 
 package lesson_8;
+
+import java.util.Objects;
+
 public class HashTableImpl <K, V> implements HashTable<K, V>{
     private final Item<K, V>[] data;
     private final Item<K, V> emptyItem;
@@ -9,9 +12,12 @@ public class HashTableImpl <K, V> implements HashTable<K, V>{
         private final K key;
         private V value;
 
+        private Item<K, V> nextItem;
+
         Item(K key, V value) {
             this.key = key;
             this.value = value;
+            this.nextItem = null;
         }
 
         @Override
@@ -24,6 +30,16 @@ public class HashTableImpl <K, V> implements HashTable<K, V>{
             return value;
         }
 
+        public Item<K, V> getNextItem() {
+            if (nextItem == null){
+                return null;
+            }
+            return nextItem;
+        }
+        public void setNextItem(Item<K, V> item){
+            this.nextItem = item;
+        }
+
         @Override
         public void setValue(V value) {
             this.value = value;
@@ -34,6 +50,7 @@ public class HashTableImpl <K, V> implements HashTable<K, V>{
             return String.format("key: %s -> value: %s", key, value);
         }
     }
+
 
     public HashTableImpl(int initialCapacity) {
         this.data = new Item[initialCapacity * 2];
@@ -51,23 +68,17 @@ public class HashTableImpl <K, V> implements HashTable<K, V>{
         }
 
         int indexFromHashFunc = hashFunc(key);
-        int n = 0;
-
-        while (data[indexFromHashFunc] != null && data[indexFromHashFunc] != emptyItem) {
-            if (isKeysEquals(data[indexFromHashFunc], key)) {
-                data[indexFromHashFunc].setValue(value);
-                return true;
-            }
-//            indexFromHashFunc += getStepLinear();
-//            indexFromHashFunc += getStepQuadratic(n++);
-            indexFromHashFunc += getDoubleHash(key);
-
-            indexFromHashFunc %= data.length;
+        if (data[indexFromHashFunc] == null) {
+            data[indexFromHashFunc] = new Item<>(key, value);
+            size++;
+            return true;
         }
-
-        data[indexFromHashFunc] = new Item<>(key, value);
+        Item<K, V> item = data[indexFromHashFunc];
+        while (item.nextItem != null) {
+            item = item.nextItem;
+        }
+        item.nextItem = new Item<>(key, value);
         size++;
-
         return true;
     }
 
@@ -76,19 +87,12 @@ public class HashTableImpl <K, V> implements HashTable<K, V>{
         return n - (key.hashCode() % n);
     }
 
-    private int getStepQuadratic(int i) {
-        return (int) Math.pow(i, 2);
-    }
-
-    private int getStepLinear() {
-        return 1;
-    }
-
     private boolean isKeysEquals(Item<K, V> item, K key) {
         if (item == emptyItem) {
             return false;
         }
-        return (item.getKey() == null) ? (key == null) : (item.getKey().equals(key));
+        if (item.getKey() == null) return key == null;
+        return item.getKey().equals(key);
     }
 
     private int hashFunc(K key) {
@@ -97,38 +101,58 @@ public class HashTableImpl <K, V> implements HashTable<K, V>{
 
     @Override
     public V get(K key) {
-        int index = indexOf(key);
-        return index == -1 ? null : data[index].getValue();
+        Item<K, V> index = indexOf(key);
+        if (index == null) return null;
+        return index.getValue();
     }
 
-    private int indexOf(K key) {
+    private Item<K, V> indexOf(K key) {
         int indexFromHashFunc = hashFunc(key);
-
-        int count = 0;
-        while (count++ < data.length) {
             if (data[indexFromHashFunc] == null) {
-                break;
+                return emptyItem;
             }
             if (isKeysEquals(data[indexFromHashFunc], key)) {
-                return indexFromHashFunc;
+                return data[indexFromHashFunc];
             }
-            indexFromHashFunc += getDoubleHash(key);
-            indexFromHashFunc %= data.length;
-        }
-
-        return -1;
+            Item<K, V> index = data[indexFromHashFunc];
+            while (!isKeysEquals(index, key)){
+                if (index.nextItem == null) return null;
+                index = index.getNextItem();
+            }
+            return index;
     }
 
     @Override
     public V remove(K key) {
-        int index = indexOf(key);
-        if (index == -1) {
+        int indexFromHashFunc = hashFunc(key);
+        if (data[indexFromHashFunc] == null) {
+            size--;
             return null;
         }
-
-        Item<K, V> removed = data[index];
-        data[index] = emptyItem;
-
+        Item<K, V> removed = data[indexFromHashFunc];
+        if (removed.getKey().equals(key)){
+            if(removed.nextItem == null) {
+                size--;
+                data[indexFromHashFunc] = null;
+            } else {
+                data[indexFromHashFunc] = removed.nextItem;
+                size--;
+                return removed.getValue();
+            }
+        }
+        Item<K, V> beforeRemoved = removed;
+        while(!removed.getKey().equals(key)){
+            beforeRemoved = removed;
+            if(removed.nextItem != null){
+                removed = removed.nextItem;
+            } else return null;
+        }
+        if (removed.nextItem == null){
+            beforeRemoved.nextItem = null;
+        } else {
+            beforeRemoved.nextItem = removed.nextItem;
+        }
+        size--;
         return removed.getValue();
     }
 
@@ -151,7 +175,17 @@ public class HashTableImpl <K, V> implements HashTable<K, V>{
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < data.length; i++) {
-            sb.append(String.format("%s = [%s]%n", i, data[i]));
+            Item<K, V> item = data[i];
+            if (item == null) {
+            } else {
+            do {
+                sb.append(String.format("Array index %s = [%s]%n", i, item));
+                if (item.nextItem == null){
+                    break;
+                }
+                item = item.nextItem;
+            } while (true);
+        }
         }
         return sb.toString();
     }
